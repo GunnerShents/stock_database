@@ -1,0 +1,9 @@
+venv/
+test.py
+.env
+test.xlsx
+order_form.xlsx
+inv.db
+__pycache__/
+__init__.py
+to_do_list.txt
