@@ -53,7 +53,8 @@ class ProductDB:
             item_object.prod_id,
             item_object.prod_version_id,
         )
-        
+        print(item_object.prod_version_id)
+        print(f'{new_version_id}, new id')
         # Update record if and only if product_id and version_id are true
         c.execute("""
             UPDATE products SET 
@@ -130,7 +131,7 @@ class InventoryDB:
         c.execute(f"DELETE FROM inventory WHERE Product_ID=?", primary_id)
         conn.commit()
         
-    def update_record(self, item_object: ProductInventory) -> None:
+    def update_record(self, item_object: ProductInventory) -> str:
         """Updates the full record located form the primary key."""
         
         #add version control here
@@ -154,10 +155,10 @@ class InventoryDB:
         )
         if c.rowcount == 0:
             #raise RuntimeError("I'm sad :(")
-            print("Nothing to this record was changed, please try again")
+            return "Nothing to this record was changed, please try again"
         # release the write access back to the world
         conn.commit()
-        print("Your record has been updated!!!")
+        return "Your record has been updated!!!"
 
 StockRecord = tuple[str, str, str, str, str, int, str, int, int]
 
