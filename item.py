@@ -5,10 +5,9 @@ from typing import Union, List
 @dataclass
 class Product:
     """A product object has a unique serial number, name, discription, order amount and
-    delivery type. Can return all propertices in a list"""
+    delivery type. Version_id is a uuid string used for record version control"""
     
     prod_id: str
-    version_id: str
     name: str
     discript: str
     order_amount: int
@@ -24,18 +23,43 @@ class ProductInventory:
     in stock."""
  
     prod_id: str
-    version_id: str
+    prod_version_id: str
+    inv_version_id: str
     name: str
     discript: str
     order_amount: int
     delivery:str
     qty:int
     limited_amount:int
+    
+    def display_data(self) -> list[int|str]:
+        """@returns a list of fields. The values reflect the data needed in the main
+        menu of the GUI"""
+        return [self.prod_id, 
+                self.name, 
+                self.discript, 
+                self.order_amount, 
+                self.delivery, 
+                self.qty, 
+                self.limited_amount]
+        
+    def update_display_fields(self, prod_id:str, name:str, dis:str, order:str, deliv:str, qty:str, lim: str) -> None:
+        """
+        Updates prod_id, name, discription, order_amount, delivery, qty and
+        limited amount.        
+        """
+        self.prod_id = prod_id
+        self.name= name 
+        self.discript = dis 
+        self.order_amount = int(order)
+        self.delivery = deliv 
+        self.qty = int(qty)
+        self.limited_amount = int(lim)
 
 
 @dataclass
 class StaffMember:
-    """A staff member has an uniwue ID, a name, an email and a unit ID."""
+    """A staff member has an unique ID, a name, an email and a unit ID."""
 
     staff_id:str
     staff_name:str
@@ -45,8 +69,8 @@ class StaffMember:
 
 @dataclass
 class OrderItem:
-    """An order class has holds the staff ID, the datetime stamp 
-    and the file path name."""
+    """An order class holds the staff ID who created the order, the datetime stamp 
+    and the file path where the order is saved."""
 
     order_id:int
     staff_id:str
@@ -54,18 +78,4 @@ class OrderItem:
     file_path:str
 
 
-# Optimistic locking
-# UPDATE ..... WHERE verson_id=old.version_id
-# 
-# t = c.transaction_start()
-# rec = t.select()  # score:30
-# rec.score = rec.score + 1
-# t.update(rec) # score:31
-# t.commit()
-# 
-# t = c.transaction_start(writing=True)
-# rec = t.select1()  # score:30
-# rec = t.select2()  # score:30
-# rec.score = rec.score + 1
-# t.update(rec) # score:31
-# t.commit()
+

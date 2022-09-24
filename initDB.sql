@@ -44,3 +44,13 @@ INNER JOIN
 	inventory 
 ON 
 	products.Product_ID = inventory.Product_ID;
+
+update 
+	inventory 
+SET 
+	inv_version_id = Product_ID;
+
+update 
+	products 
+SET 
+	prod_version_id = Product_ID

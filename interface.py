@@ -1,17 +1,21 @@
+from winreg import SetValueEx
 from inventory_main import InterfaceActions
 from database import *
 from order_form import *
-from item import Product, StaffMember
+from item import Product, StaffMember, ProductInventory
 from order_form import *
 #import PySimpleGUI as psg
 from typing import TYPE_CHECKING, Any
-from typing import Union, List
+from typing import Union, List, Callable
  
 if TYPE_CHECKING:
     psg = Any
 else:
     import PySimpleGUI as psg
 
+#type check alas
+TableData = list[list[str | int]]
+StockRecord = tuple[str, str, str, str, str, int, str, int, int]
 
 class Display:
     """Takes StockItems and holds them in a dictionary, has function to update the inventory,
@@ -49,17 +53,27 @@ class Display:
                     key=a_key,
                     row_height=35,)
         return table
-
-    def main(self) -> None:
-        """Shows all the current stock in the Pysimplegui application."""
-        data = self.stock.get_all_records()
+    
+    def create_table_data(self, data_source:Callable[[], list[tuple[str]]]) -> TableData:
+        """
+        add notes
+        """
+        data = data_source()
         new_data:List[List[Union[str,int]]] = []
         for record in data:
-            new_data.append(list(record))
-        headers = self.stock.get_header_names()
-        psg_table = self.table_template(new_data,headers,'-TABLE-')
+            record_object = ProductInventory(*record)
+            display_data = record_object.display_data()
+            new_data.append(display_data)
+        return new_data
+            
+    def main(self) -> None:
+        """Shows all the current stock in the Pysimplegui application."""
+        
+        new_data = self.create_table_data(self.stock.get_all_records)
+        psg_table = self.table_template(new_data,self.headers,'-TABLE-')
         layout = [
             [psg.Button("Refresh", size=(10,0)),psg.Push(),psg.Text("***STOCK MAIN MENU***",size=(60,1), justification='centre'),psg.Push()],
+            #Table displayed at this row of the layout
             [psg_table],
             [psg.Push(),
             psg.Button("Add To Stock", size=(20,1),pad=(35,10)),
@@ -73,14 +87,16 @@ class Display:
             if event == psg.WIN_CLOSED:
                 break
             if event == 'Refresh':
-                data = self.stock.get_all_records()
-                new_data:List[List[Union[str,int]]] = [list(record) for record in data]
+                # data = self.stock.get_all_records()
+                # new_data:List[List[Union[str,int]]] = [list(record) for record in data]
+                new_data = self.create_table_data(self.stock.get_all_records)
                 layout[1][0].update(values=new_data)   
             if event == '-TABLE-':
                 if values['-TABLE-']:
                     try:
-                        index:int = values['-TABLE-'][0]
-                        record = new_data[index]
+                        index:str = values['-TABLE-'][0]
+                        record:str = new_data[index][0]
+                        print(type(record))
                         self.crud_window(record)
                     except IndexError:
                         print(values['-TABLE-'])
@@ -94,20 +110,22 @@ class Display:
                 
         self.window_stock.close()
 
-    def crud_window(self, record_details:List[Union[str,int]]) -> None:
+    def crud_window(self, record_details:str) -> None:
         """@args the record information from the main table. 
         Allows the user to update the record details in the GUI and 
         the database."""
+        #locate the record from the database
+        record_data = self.stock.get_record(record_details)
         #create a product object with the record information
-        my_record = self.inventory.create_productInv_object(*record_details)
-        
+        my_record = ProductInventory(*record_data[0])
+        my_record_display_details = my_record.display_data()
+        print(self.headers)
         layout = [
             [psg.Text("***AMEND STOCK ITEM***",size=(40,1), justification='centre')],
         ]
         for index, header in enumerate(self.headers):  
-            new_row = [psg.Text(f'{header}',size=(20,1)), 
-                        psg.Text(f'{record_details[index]}',size=(10,1)),
-                        psg.Input(default_text=f"{record_details[index]}", key='TEXT', size=(20,1),disabled=True,), 
+            new_row = [psg.Text(f'{header}',size=(20,1)),
+                        psg.Input(default_text=f"{my_record_display_details[index]}", key='TEXT', size=(20,1),disabled=True,), 
                         ]
             layout.append(new_row)
         layout.append([
@@ -130,16 +148,14 @@ class Display:
             if event == 'Create record':
                 for i in range(1,8):
                     layout[i][1].update(value='')
-                    layout[i][2].update(value='', disabled=False)
             if event == 'edit':
                 for i in range(1,8):
-                    layout[i][2].update(disabled=False)
+                    layout[i][1].update(disabled=False)
             if event == 'Update Record':
-                my_record = self.inventory.create_productInv_object(*values.values())
+                updated_record = my_record.update_display_fields(*values.values())
                 self.inventory.create_or_update_record(my_record)
                 break
             if event == 'Delete':
-                my_record = self.inventory.create_productInv_object(*values.values())
                 self.inventory.delete_record(my_record)
                 break
                 
@@ -148,11 +164,8 @@ class Display:
     def show_low_stock (self) -> None:
         """Checks what items are below the set limits and displays the 
         items in a GUI table."""
-        data = self.stock.need_ordering()
-        new_data:List[List[str]] = []
-        self.prod_id_list_for_orders = []
-        for record in data:
-            new_data.append(list(record))
+        
+        new_data = self.create_table_data(self.stock.need_ordering)
         headers = self.stock.get_header_names()
         psg_table = self.table_template(new_data,headers,'-TABLE-')
         layout = [
@@ -184,13 +197,7 @@ class Display:
     def show_all_products(self) -> None:
         """Checks with the database what products are available. Diaplays
         items in a GUI table."""
-        data = self.product.get_all_records()
-        new_data:List[List[str]] = []
-        self.prod_id_list_for_orders = []
-        for record in data:
-            new_data.append(list(record))
-        headers = self.product.get_header_names()
-        
+        new_data = self.create_table_data(self.stock.get_all_records)
         #top row
         row1 = [psg.Push(),psg.Frame('Prduct Main Menu:',
                 [[psg.Text(f"* * * "*29, text_color=('yellow'))],
@@ -201,7 +208,7 @@ class Display:
         row2 = [psg.Frame('Products:',
                 [[psg.Table(
                     values=new_data,
-                    headings=headers,
+                    headings=self.headers,
                     max_col_width=25,
                     auto_size_columns=True,
                     display_row_numbers=False,
@@ -227,11 +234,9 @@ class Display:
                 break
             if event == 'Add To Order':
                 v:List[int] = values['-TABLE-']
-                if len(v) > 0:
-                    selected_prods = [rec for i, rec in enumerate(new_data) if i in v]
-                    for x in selected_prods:
-                        self.prod_id_list_for_orders.append(x[0])
-                    self.create_order(self.prod_id_list_for_orders)
+                if len(v) > 0:     
+                    selected_prods = [str(rec[0]) for i, rec in enumerate(new_data) if i in v]
+                    self.create_order(selected_prods)
                     break
             if event == '-Close-':
                 break
