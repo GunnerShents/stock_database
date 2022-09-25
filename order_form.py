@@ -14,11 +14,7 @@ from datetime import datetime
 # print(sheet['C16'].value)
 #wb.save(filename='test.xlsx')
 
-#send a nested list.
-#create a method that takes the the first list splits the nsn into a list 
-#and returns a new nested list [[split NSN], name, batch amount, qty?]  
-#second method write all the list details to the excel doc, also need to active the doc
-#method to save using date time stamp and close the doc.
+
 
 class Order:
     """Add class doc here."""       
@@ -112,9 +108,3 @@ class Order:
 
     
 
-
-# prod_id = '7777555555555'
-# test= Order()
-# test.active_file()
-# test.write_prod_line(prod_id)
-# test.save_close_file()

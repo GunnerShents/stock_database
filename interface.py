@@ -1,4 +1,3 @@
-from winreg import SetValueEx
 from inventory_main import InterfaceActions
 from database import *
 from order_form import *
@@ -102,7 +101,7 @@ class Display:
                     try:
                         index:str = values['-TABLE-'][0]
                         record:str = new_data[index][0]
-                        print(type(record))
+                        #print(type(record))
                         self.crud_window(record)
                     except IndexError:
                         print(values['-TABLE-'])
@@ -247,6 +246,7 @@ class Display:
             if event == 'Add To Order':
                 v:List[int] = values['-TABLE-']
                 if len(v) > 0:     
+                    #list containing all the product ids from the selected records.
                     selected_prods = [str(rec[0]) for i, rec in enumerate(new_data) if i in v]
                     self.create_order(selected_prods)
                     break
@@ -260,24 +260,34 @@ class Display:
         """Shows a table of the selected products from the previous screen.
         Products can be added and removed."""
         
+        #Checks if an item already exists in the current order list
         def item_check( name:str) -> bool:
             for x in new_data:
                 if name in x:
                     return True
             return False
-        
+        #creates a list of tuples each being a product record
         data = self.product.get_selection_of_records(list_of_prod_ids)
+        #Creates a list of lists each list is a string of product fields
         new_data:List[List[str]] = []
         for record in data:
-            new_data.append(list(record))
-        headers = self.product.get_header_names()
-        psg_table = self.table_template(new_data,headers,'-TABLE-')
-        product_objects = self.inventory.get_product_objects(True)
-        staff_objects = self.inventory.get_product_objects(False)
+            #casts to a list removes the product version held at index 1, appends to the data list 
+            record = list(record)
+            record.pop(1)
+            new_data.append(record)
+        #Creates the table 
+        psg_table = self.table_template(new_data,self.product.get_header_names(),'-TABLE-')
+        #creates a dictionary key is the product name as a string the value is a product object.
+        product_objects = self.inventory.get_product_objects()
+        #creates a dictionary key is the staff name as a string the value is a staff object.
+        staff_objects = self.inventory.get_staff_objects()
+    
+        #column 1
         col1 = psg.Column([[psg.Frame('Products:',
                           [[psg_table]]
                                      )
                            ]])
+        #column 2
         col2 = psg.Column([[psg.Frame('Order Details:',
                           [[psg.Listbox([f'{product_objects[prod].name}' for prod in product_objects],expand_y=True,size=(20,10),key='-PROD-' )]]
                                       )],
@@ -285,11 +295,14 @@ class Display:
                           [[psg.Listbox([f'{staff_objects[staff].staff_name}' for staff in staff_objects],expand_y=True,size=(15,10),key='-STAFF-')]]
                                      )
                            ]])             
+        #row2
         bottom_row = [psg.Push(),
                     psg.Button("Remove Product", size=(15,1)),
                     psg.Button("Add Another Product", size=(15,1)),
                     psg.Button("Create Spread Sheet", size=(15,1)),psg.Push()]
+        #Create window layout
         layout = [psg.vtop([col1,col2]),[bottom_row]]
+        
         window_order = psg.Window("Order Form", layout)
         
         while True:
@@ -301,7 +314,7 @@ class Display:
                     name = values['-PROD-'][0]
                     obj = product_objects[name]
                     if not item_check(name):
-                        new_data.append(list(obj.get_all_fields()))
+                        new_data.append(obj.display_data())
                         layout[0][0].get_next_focus().update(values=new_data)
             if event == 'Remove Product':
                 if len(values['-TABLE-'])>0:

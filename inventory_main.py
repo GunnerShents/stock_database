@@ -42,28 +42,54 @@ class InterfaceActions:
         else:
             print("record is not in the database")
         
-    def get_product_objects(self, prod:bool) ->Dict[str,Product|StaffMember]:
+    def get_product_objects(self) ->Dict[str,Product]:
         """@returns a dictionary of all available products. 
         key is the product name and the value is the full product object."""
-        object_list:list[Product|StaffMember] = []
-        object_dict:dict[str,Product|StaffMember] = {}
-        if prod:
-            rec = self.product_db.get_all_records()
-            for x in rec:
-                record = Product(*x)
-                object_list.append(record)
-            for product in object_list:
-                object_dict[product.name] = product 
-            return object_dict
-        else:
-            rec = self.staff_db.get_all_records()
-            for x in rec:
-                record = StaffMember(*x)
-                object_list.append(record)
-                print(record)
-            for product in object_list:
-                object_dict[product.staff_name] = product 
-            return object_dict
+        object_list:list[Product] = []
+        object_dict:dict[str,Product] = {}    
+        #creates a list of tuples containing all the records in the product database
+        rec = self.product_db.get_all_records()
+        #Creates an object from the product fields
+        for x in rec:
+            record = Product(*x)
+            object_list.append(record)
+        #creates a dictionary k is product name as a string, value is a product object
+        for product in object_list:
+            object_dict[product.name] = product 
+        return object_dict
+    
+    
+    def get_staff_objects(self) ->Dict[str,StaffMember]:
+        """@returns a dictionary of all available staff members. 
+        key is the staff name and the value is a staff object."""
+        object_list:list[StaffMember] = []
+        object_dict:dict[str,StaffMember] = {}    
+        #creates a list of tuples containing all the records in the product database
+        rec = self.staff_db.get_all_records()
+        #Creates an object from the product fields
+        for x in rec:
+            record = StaffMember(*x)
+            object_list.append(record)
+        #creates a dictionary k is product name as a string, value is a product object
+        for product in object_list:
+            object_dict[product.staff_name] = product 
+        return object_dict
+
+
+    
+    
+    
+    
+    
+        # else:
+        #     rec = self.staff_db.get_all_records()
+        #     for x in rec:
+        #         record = StaffMember(*x)
+        #         object_list.append(record)
+        #         print(record)
+        #     for product in object_list:
+        #         object_dict[product.staff_name] = product 
+        #     return object_dict
     
     
       

@@ -96,7 +96,7 @@ class ProductDB:
         """@returns a list of tuples containing all the product fields for the 
         record collection in the @arg"""
         ids = tuple(prod_id_list)
-        expression = ','.join(['?']*len(ids))  # dis so ugly, though
+        expression = ','.join(['?']*len(ids))  
         sql = f"SELECT * FROM products WHERE Product_ID IN ({expression})"
         c.execute(sql,ids)
         return c.fetchall()
@@ -105,6 +105,7 @@ class ProductDB:
         """@returns all the column names from the db products table."""
         cursor = conn.execute(f"SELECT * FROM products")
         names = [description[0] for description in cursor.description]
+        names.remove("prod_version_id")
         return names
 
 class InventoryDB:    
@@ -243,8 +244,6 @@ class StaffDB:
         )
         return c.fetchall()
     
-a = StaffDB()
-print(a.get_all_records())
 
 class CompletedOrders:
     """Carries out CRUD commands on the order table in the database."""

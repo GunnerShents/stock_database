@@ -10,6 +10,15 @@ class Product:
     discript: str
     order_amount: int
     delivery:str
+
+    def display_data(self) -> list[str]:
+        """@returns a list of fields. The values reflect the data needed in the main
+            menu of the GUI. All fields are returned as strings."""
+        return [self.prod_id,
+                self.name,
+                self.discript,
+                str(self.order_amount),
+                self.delivery]
     
 
 @dataclass
@@ -31,7 +40,7 @@ class ProductInventory:
     
     def display_data(self) -> list[int|str]:
         """@returns a list of fields. The values reflect the data needed in the main
-        menu of the GUI"""
+        menu of the GUI."""
         return [self.prod_id, 
                 self.name, 
                 self.discript, 
