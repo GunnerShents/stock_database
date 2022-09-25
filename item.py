@@ -1,6 +1,4 @@
 from dataclasses import dataclass
-from typing import Union, List
-
 
 @dataclass
 class Product:
@@ -13,7 +11,6 @@ class Product:
     order_amount: int
     delivery:str
     
-
 
 @dataclass
 class ProductInventory:

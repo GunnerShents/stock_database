@@ -56,7 +56,10 @@ class Display:
     
     def create_table_data(self, data_source:Callable[[], list[tuple[str]]]) -> TableData:
         """
-        add notes
+        Collects all the records from the data_source, refines a list to hold the fields
+        needed for the display menus in the frontend.
+        @args function that returns all the records from a choosen database.
+        @return list of list containing strings and integers.
         """
         data = data_source()
         new_data:List[List[Union[str,int]]] = []
@@ -69,8 +72,11 @@ class Display:
     def main(self) -> None:
         """Shows all the current stock in the Pysimplegui application."""
         
+       #list of list holding data records
         new_data = self.create_table_data(self.stock.get_all_records)
+        #creates the table
         psg_table = self.table_template(new_data,self.headers,'-TABLE-')
+        #create the window layout built up in rows.
         layout = [
             [psg.Button("Refresh", size=(10,0)),psg.Push(),psg.Text("***STOCK MAIN MENU***",size=(60,1), justification='centre'),psg.Push()],
             #Table displayed at this row of the layout
@@ -110,16 +116,18 @@ class Display:
                 
         self.window_stock.close()
 
-    def crud_window(self, record_details:str) -> None:
-        """@args the record information from the main table. 
-        Allows the user to update the record details in the GUI and 
-        the database."""
+    def crud_window(self, record_id:str) -> None:
+        """
+        Allows the user to update the selected record, create a new record, edit or
+        delete a record.
+        @args the product ID of the selected product as a string. 
+        """
         #locate the record from the database
-        record_data = self.stock.get_record(record_details)
+        record_data = self.stock.get_record(record_id)
         #create a product object with the record information
         my_record = ProductInventory(*record_data[0])
         my_record_display_details = my_record.display_data()
-        print(self.headers)
+        #create the window layout built up in rows.
         layout = [
             [psg.Text("***AMEND STOCK ITEM***",size=(40,1), justification='centre')],
         ]
@@ -165,9 +173,11 @@ class Display:
         """Checks what items are below the set limits and displays the 
         items in a GUI table."""
         
+        #List of list holding the data records.
         new_data = self.create_table_data(self.stock.need_ordering)
-        headers = self.stock.get_header_names()
-        psg_table = self.table_template(new_data,headers,'-TABLE-')
+        #Creates the table
+        psg_table = self.table_template(new_data,self.headers,'-TABLE-')
+        #create the window layout built up in rows.
         layout = [
             [psg.Push(),
             (psg.Text("***LOW SOCK***",size=(80,1), justification='centre')),
@@ -197,6 +207,8 @@ class Display:
     def show_all_products(self) -> None:
         """Checks with the database what products are available. Diaplays
         items in a GUI table."""
+        
+        #List of lists holding data records.
         new_data = self.create_table_data(self.stock.get_all_records)
         #top row
         row1 = [psg.Push(),psg.Frame('Prduct Main Menu:',
@@ -223,7 +235,7 @@ class Display:
              psg.Button("Close Window", size=(20,1), key='-Close-'),
              psg.Button("Add To Order", size=(15,1)),
              psg.Push()]
-    
+        #Create the layout 
         layout = [[row1],[row2],[row3]]
         
         window_product = psg.Window("Availabe products", layout)
@@ -311,11 +323,7 @@ class Display:
                 #creates the order form adds the order, saves and closes file.
                 self.order_form.write_order_to_file(prod_order_list)
                 new_data = []
-                layout[0][0].get_next_focus().update(values=new_data)
-                
-                
-               
-              
+                layout[0][0].get_next_focus().update(values=new_data)          
                 
         window_order.close()
             
